@@ -1,0 +1,52 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+def crank_nicolson_heat_eq(f, L, T, nx, nt, alpha):
+    dx = L / nx
+    dt = T / nt
+    x_values = np.linspace(0, L, nx+1)
+    t_values = np.linspace(0, T, nt+1)
+    u = np.zeros((nx+1, nt+1))
+    
+    
+    u[:, 0] = f(x_values)
+    
+    
+    r = alpha * dt / (2 * dx**2)
+    s = 1 - 2 * r
+    
+    
+    A = np.diag((1 + 2*r) * np.ones(nx-1)) + np.diag(-r * np.ones(nx-2), 1) + np.diag(-r * np.ones(nx-2), -1)
+    B = np.diag((1 - 2*r) * np.ones(nx-1)) + np.diag(r * np.ones(nx-2), 1) + np.diag(r * np.ones(nx-2), -1)
+    
+    
+    for n in range(nt):
+        u_intermediate = np.linalg.solve(A, np.dot(B, u[1:nx, n]))
+        u[1:nx, n+1] = u_intermediate
+        
+    return x_values, t_values, u
+
+
+def initial_condition(x):
+    return np.sin(x)
+
+
+L = np.pi   
+T = 1.0     
+nx = 50     
+nt = 500    
+alpha = 0.01 
+
+
+x_values, t_values, u = crank_nicolson_heat_eq(initial_condition, L, T, nx, nt, alpha)
+
+
+X, T = np.meshgrid(x_values, t_values)
+fig = plt.figure(figsize=(10, 6))
+ax = fig.add_subplot(111, projection='3d')
+ax.plot_surface(X, T, u.T, cmap='viridis')
+ax.set_xlabel('x')
+ax.set_ylabel('t')
+ax.set_zlabel('Temperatur')
+ax.set_title('Løsning gjennom Crank-Nicolson')
+plt.show()
